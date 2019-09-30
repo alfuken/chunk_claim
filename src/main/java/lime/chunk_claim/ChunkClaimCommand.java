@@ -29,6 +29,7 @@ public class ChunkClaimCommand implements ICommand {
     @Override
     public String getUsage(ICommandSender sender) {
         return "<chunk_claim|chunkclaim|cclaim> <info|list|claim|unclaim|addmember <name>|removemember <name>|evict>";
+        // |allow <rule>|forbid <rule>>, where <rule> is one of the following: devices_blocks, block_use, block_break, block_place, use, spawn, attack, activation
     }
 
     @Override

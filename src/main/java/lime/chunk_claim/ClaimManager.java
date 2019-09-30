@@ -25,7 +25,7 @@ class ClaimManager {
     static final String S_OWNED_BY            = "This chunk is owned by %s";
     static final String S_MEMBERS             = " Registered members: %s";
     static final String S_CHUNK_LOC           = "%nx: %d, z: %d";
-    static final String S_MAX_CLAIMS          = "You have reached maximally allowed number (%d) of claimed chunks.";
+    static final String S_MAX_CLAIMS          = "You have reached max allowed number (%d) of claimed chunks.";
     static final String S_OOPS = "Oops. Something went wrong. Please contact server owner or author of this mod.";
 
     static String claim(EntityPlayer player)
@@ -36,13 +36,9 @@ class ClaimManager {
         if (cd.isOwned()) return S_TAKEN;
         if (ClaimData.getClaimsCount(player) >= ChunkClaim.max_chunks) return String.format(S_MAX_CLAIMS, ChunkClaim.max_chunks);
 
-        cd.setX(player.getPosition().getX() >> 4);
-        cd.setZ(player.getPosition().getZ() >> 4);
-        cd.setOwner(player.getDisplayNameString());
-        cd.setDimension(player.dimension);
+        (new ClaimData(player)).save();
 
-        if (ClaimData.add(cd)) return S_CLAIMED;
-        else return S_OOPS;
+        return S_CLAIMED;
     }
 
     static String unclaim(EntityPlayer player)
@@ -51,8 +47,8 @@ class ClaimManager {
 
         if (!cd.isOwner(player)) return S_Y_R_NOT_OWNER;
 
-        if (ClaimData.remove(cd)) return S_UNCLAIMED;
-        else return S_OOPS;
+        cd.delete();
+        return S_UNCLAIMED;
     }
 
     static String sudo_unclaim(EntityPlayer player)
@@ -63,8 +59,8 @@ class ClaimManager {
 
         if (!cd.isOwned()) return S_NOT_CLAIMED;
 
-        if (ClaimData.remove(cd)) return S_NO_LONGER_CLAIMED;
-        else return S_OOPS;
+        cd.delete();
+        return S_NO_LONGER_CLAIMED;
     }
 
     static String evict(EntityPlayer player)

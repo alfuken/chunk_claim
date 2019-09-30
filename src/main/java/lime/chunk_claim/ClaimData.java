@@ -3,25 +3,26 @@ package lime.chunk_claim;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.common.util.FakePlayer;
 
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.stream.Collectors;
 
 class ClaimData { // for alternative way: implements Serializable
-    private static List<ClaimData> data = new ArrayList<>();
+    private static Map<String, ClaimData> data = new HashMap<>();
 
     static ClaimData get(int x, int z, int dimension)
     {
-        for (ClaimData cd : data)
-        {
-            if (cd.getX() == x && cd.getZ() == z && cd.getDimension() == dimension)
-            {
-                return cd;
-            }
-        }
-        return new ClaimData();
+        return data.getOrDefault(getKey(x,z,dimension), new ClaimData());
+    }
+
+    static String getKey(int x, int z, int dimension){
+        return x+":"+"z"+"@"+dimension;
     }
 
     static ClaimData get(int x, int z, EntityPlayer player)
@@ -29,21 +30,30 @@ class ClaimData { // for alternative way: implements Serializable
         return get(x, z, player.dimension);
     }
 
-    static ClaimData get(EntityPlayer player)
+
+    static ClaimData get(BlockPos pos, EntityPlayer player)
     {
-        return get(player.getPosition().getX() >> 4, player.getPosition().getZ() >> 4, player.dimension);
+        return get(pos.getX() >> 4, pos.getZ() >> 4, player.dimension);
     }
 
-    static boolean add(ClaimData cd){
-        boolean result = data.add(cd);
-        save();
-        return result;
+    static ClaimData get(BlockPos pos, int dimension)
+    {
+        return get(pos.getX() >> 4, pos.getZ() >> 4, dimension);
     }
 
-    static boolean remove(ClaimData cd){
-        boolean result = data.remove(cd);
-        save();
-        return result;
+    static ClaimData get(Entity entity)
+    {
+        return get(entity.getPosition().getX() >> 4, entity.getPosition().getZ() >> 4, entity.dimension);
+    }
+
+    static void add(ClaimData cd){
+        data.put(cd.key(), cd);
+        save_all();
+    }
+
+    static void remove(ClaimData cd){
+        data.remove(cd.key());
+        save_all();
     }
 
     static void load()
@@ -65,7 +75,7 @@ class ClaimData { // for alternative way: implements Serializable
         }
     }
 
-    static void save()
+    static void save_all()
     {
         GsonBuilder builder = new GsonBuilder();
         builder.setPrettyPrinting().serializeNulls();
@@ -91,20 +101,12 @@ class ClaimData { // for alternative way: implements Serializable
 
     static int getClaimsCount(EntityPlayer player)
     {
-        int n = 0;
-        for (ClaimData cd : data){
-            if (cd.isOwner(player)) n += 1;
-        }
-        return n;
+        return getClaims(player).size();
     }
 
     static List<ClaimData> getClaims(EntityPlayer player)
     {
-        ArrayList<ClaimData> list = new ArrayList<>();
-        for (ClaimData cd : data){
-            if (cd.isOwner(player)) list.add(cd);
-        }
-        return list;
+        return data.values().stream().filter(cd -> cd.isOwner(player)).collect(Collectors.toList());
     }
 
     // Instance methods
@@ -121,6 +123,26 @@ class ClaimData { // for alternative way: implements Serializable
         this.z = Integer.MAX_VALUE;
         this.dimension = Integer.MAX_VALUE;
         this.owner = "";
+    }
+
+    ClaimData(EntityPlayer player)
+    {
+        this.x = player.getPosition().getX() >> 4;
+        this.z = player.getPosition().getZ() >> 4;
+        this.dimension = player.dimension;
+        this.owner = player.getDisplayNameString();
+    }
+
+    void save(){
+        add(this);
+    }
+
+    void delete(){
+        remove(this);
+    }
+
+    String key(){
+        return getKey(x,z,dimension);
     }
 
     void setX(int x)
@@ -165,7 +187,7 @@ class ClaimData { // for alternative way: implements Serializable
 
     boolean addMember(String name)
     {
-        if (!this.members.contains(name))
+        if (!isMember(name))
         {
             boolean result = this.members.add(name);
             save();
@@ -176,7 +198,7 @@ class ClaimData { // for alternative way: implements Serializable
 
     boolean removeMember(String name)
     {
-        if (this.members.contains(name))
+        if (isMember(name))
         {
             boolean result = this.members.remove(name);
             save();
@@ -217,19 +239,13 @@ class ClaimData { // for alternative way: implements Serializable
 
     boolean isMember(String name)
     {
-        for (String member : this.members)
-        {
-            if (member.equalsIgnoreCase(name))
-            {
-                return true;
-            }
-        }
-        return false;
+        return this.members.contains(name);
     }
 
     boolean isCitizen(EntityPlayer player)
     {
-        return (this.isOwner(player) || this.isMember(player));
+        boolean is_fake_and_enabled = player instanceof FakePlayer && !ChunkClaim.disable_fake_block_interaction;
+        return (this.isOwner(player) || this.isMember(player) || is_fake_and_enabled);
 //        if (this.isOwner(player)) return true;
 //        else return this.isMember(player.getDisplayNameString());
     }
