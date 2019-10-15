@@ -20,7 +20,7 @@ import org.apache.logging.log4j.Logger;
 public class ChunkClaim {
     static final String MODID = "chunk_claim";
     static final String NAME = "Chunk Claim";
-    static final String VERSION = "5";
+    static final String VERSION = "6";
 
     @Mod.Instance(MODID)
     public static ChunkClaim instance = new ChunkClaim();

@@ -22,8 +22,8 @@ public class EventHandlers {
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onBlockBreak(BlockEvent.BreakEvent event)
     {
-        if (!ChunkClaim.disable_block_breaking) return;
-        if (event.getWorld().isRemote) return;
+        if (!ChunkClaim.disable_block_breaking || event.getWorld().isRemote || event.getPlayer().isCreative()) return;
+
         ClaimData cd = ClaimData.get(event.getPos(), event.getPlayer());
         if (!cd.isOwned()) return;
 
@@ -35,20 +35,20 @@ public class EventHandlers {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public void onMobSpawning(LivingSpawnEvent.CheckSpawn event) {
-        if (!ChunkClaim.disable_entity_spawning) return;
-        if (event.getEntity().getEntityWorld().isRemote) return;
+        if (!ChunkClaim.disable_entity_spawning || event.getEntity().getEntityWorld().isRemote) return;
+
         ClaimData cd = ClaimData.get(event.getEntity());
         if (!cd.isOwned()) return;
 
-//      event.setCanceled(true);
+        event.setCanceled(true);
         event.setResult(Event.Result.DENY);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onBlockPlace(BlockEvent.PlaceEvent event)
     {
-        if (event.getWorld().isRemote) return;
-        if (!ChunkClaim.disable_block_placing) return;
+        if (event.getWorld().isRemote || !ChunkClaim.disable_block_placing || event.getPlayer().isCreative()) return;
+
         ClaimData cd = ClaimData.get(event.getPos(), event.getPlayer());
         if (!cd.isOwned()) return;
 
@@ -65,8 +65,8 @@ public class EventHandlers {
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onEntityAttacked(AttackEntityEvent event)
     {
-        if (!ChunkClaim.disable_attacking_entities) return;
-        if (event.getEntityPlayer().getEntityWorld().isRemote) return;
+        if (!ChunkClaim.disable_attacking_entities || event.getEntityPlayer().getEntityWorld().isRemote || event.getEntityPlayer().isCreative()) return;
+
         ClaimData cd = ClaimData.get(event.getTarget().getPosition(), event.getEntityPlayer());
         if (!cd.isOwned()) return;
 
@@ -107,8 +107,7 @@ public class EventHandlers {
     @SubscribeEvent
     public static void onExplosionDetonate(ExplosionEvent.Detonate event)
     {
-        if (!ChunkClaim.disable_explosions) return;
-        if (event.getWorld().isRemote) return;
+        if (!ChunkClaim.disable_explosions || event.getWorld().isRemote) return;
 
         Explosion explosion = event.getExplosion();
         if (explosion.getAffectedBlockPositions().isEmpty()) return;
@@ -136,7 +135,8 @@ public class EventHandlers {
 
     static void validatePlayerInteractEvent(PlayerInteractEvent event, BlockPos pos)
     {
-        if (event.getEntityPlayer().getEntityWorld().isRemote) return;
+        if (event.getEntityPlayer().getEntityWorld().isRemote || event.getEntityPlayer().isCreative()) return;
+
         ClaimData cd = ClaimData.get(pos, event.getEntityPlayer());
         if (!cd.isOwned()) return;
 
