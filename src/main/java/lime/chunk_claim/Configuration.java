@@ -37,7 +37,7 @@ public class Configuration {
             disable_entity_spawning = builder
                     .comment("Disable mob spawns inside claimed chunk.")
                     .translation("chunkClaim.config.disable_entity_spawning")
-                    .define("disable_entity_spawning", true);
+                    .define("disable_entity_spawning", false);
             disable_block_breaking = builder
                     .comment("Disallow non-owner and non-guests to break any blocks inside claimed chunk.")
                     .translation("chunkClaim.config.disable_block_breaking")

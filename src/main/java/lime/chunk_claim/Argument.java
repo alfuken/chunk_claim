@@ -34,7 +34,7 @@ public class Argument implements ArgumentType<String> {
         return ISuggestionProvider.suggest(commands, builder);
     }
 
-    public enum COMMANDS {
+    private enum COMMANDS {
         INFO, LIST, CLAIM, UNCLAIM, ADD_MEMBER, REMOVE_MEMBER, EVICT, SUDO_UNCLAIM;
     }
 }

@@ -22,13 +22,12 @@ public class ClaimData { // for alternative way: implements Serializable
     }
 
     public static String getKey(int x, int z, int dimension) {
-        return x + ":" + "z" + "@" + dimension;
+        return x + ":" + z + "@" + dimension;
     }
 
     static ClaimData get(int x, int z, PlayerEntity player) {
         return get(x, z, player.dimension.getId());
     }
-
 
     static ClaimData get(BlockPos pos, PlayerEntity player) {
         return get(pos.getX() >> 4, pos.getZ() >> 4, player.dimension.getId());
@@ -58,8 +57,7 @@ public class ClaimData { // for alternative way: implements Serializable
             try {
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
                 Gson gson = new Gson();
-                Type listType = new TypeToken<Collection<ClaimData>>() {
-                }.getType();
+                Type listType = new TypeToken<Map<String, ClaimData>>() {}.getType();
                 data = gson.fromJson(bufferedReader, listType);
             } catch (Exception e) {
                 e.printStackTrace();
