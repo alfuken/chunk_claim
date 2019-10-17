@@ -1,7 +1,8 @@
 package lime.chunk_claim;
 
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Explosion;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
@@ -9,10 +10,10 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.Event;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,22 +21,21 @@ import java.util.List;
 @Mod.EventBusSubscriber
 public class EventHandlers {
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onBlockBreak(BlockEvent.BreakEvent event)
-    {
-        if (!ChunkClaim.disable_block_breaking || event.getWorld().isRemote || event.getPlayer().isCreative()) return;
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (!Configuration.COMMON.disable_block_breaking.get() || event.getWorld().isRemote() || event.getPlayer().isCreative())
+            return;
 
         ClaimData cd = ClaimData.get(event.getPos(), event.getPlayer());
         if (!cd.isOwned()) return;
 
-        if(!cd.isCitizen(event.getPlayer()))
-        {
+        if (!cd.isCitizen(event.getPlayer())) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public void onMobSpawning(LivingSpawnEvent.CheckSpawn event) {
-        if (!ChunkClaim.disable_entity_spawning || event.getEntity().getEntityWorld().isRemote) return;
+        if (!Configuration.COMMON.disable_entity_spawning.get() || event.getEntity().getEntityWorld().isRemote) return;
 
         ClaimData cd = ClaimData.get(event.getEntity());
         if (!cd.isOwned()) return;
@@ -45,107 +45,102 @@ public class EventHandlers {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onBlockPlace(BlockEvent.PlaceEvent event)
-    {
-        if (event.getWorld().isRemote || !ChunkClaim.disable_block_placing || event.getPlayer().isCreative()) return;
+    public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
+        PlayerEntity playerEntity = null;
+        if (event.getEntity() instanceof PlayerEntity) {
+            playerEntity = (PlayerEntity) event.getEntity();
+        }
 
-        ClaimData cd = ClaimData.get(event.getPos(), event.getPlayer());
+        if (playerEntity == null) {
+            return;
+        }
+
+        if (event.getWorld().isRemote() || !Configuration.COMMON.disable_block_placing.get() || playerEntity.isCreative())
+            return; // CHECK
+
+        ClaimData cd = ClaimData.get(event.getPos(), playerEntity);
         if (!cd.isOwned()) return;
 
-        if(!cd.isCitizen(event.getPlayer()))
-        {
+        if (!cd.isCitizen(playerEntity)) {
             event.setCanceled(true);
-            if(event.getPlayer() instanceof EntityPlayerMP)
-            {
-                ((EntityPlayerMP)event.getPlayer()).sendContainerToPlayer(event.getPlayer().inventoryContainer);
+            if (playerEntity instanceof ServerPlayerEntity) {
+                ((ServerPlayerEntity) playerEntity).sendContainerToPlayer(playerEntity.container);
             }
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onEntityAttacked(AttackEntityEvent event)
-    {
-        if (!ChunkClaim.disable_attacking_entities || event.getEntityPlayer().getEntityWorld().isRemote || event.getEntityPlayer().isCreative()) return;
+    public static void onEntityAttacked(AttackEntityEvent event) {
+        if (!Configuration.COMMON.disable_attacking_entities.get() || event.getPlayer().getEntityWorld().isRemote || event.getPlayer().isCreative())
+            return;
 
-        ClaimData cd = ClaimData.get(event.getTarget().getPosition(), event.getEntityPlayer());
+        ClaimData cd = ClaimData.get(event.getTarget().getPosition(), event.getPlayer());
         if (!cd.isOwned()) return;
 
-        if(!cd.isCitizen(event.getEntityPlayer()))
-        {
+        if (!cd.isCitizen(event.getPlayer())) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event)
-    {
-        if (!ChunkClaim.disable_entity_interaction) return;
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (!Configuration.COMMON.disable_entity_interaction.get()) return;
         validatePlayerInteractEvent(event, event.getTarget().getPosition());
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event)
-    {
-        if (!ChunkClaim.disable_block_interaction) return;
+    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (!Configuration.COMMON.disable_block_interaction.get()) return;
         validatePlayerInteractEvent(event);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onRightClickItem(PlayerInteractEvent.RightClickItem event)
-    {
-        if (!ChunkClaim.disable_item_activation) return;
+    public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (!Configuration.COMMON.disable_item_activation.get()) return;
         validatePlayerInteractEvent(event);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onBlockLeftClick(PlayerInteractEvent.LeftClickBlock event)
-    {
-        if (!ChunkClaim.disable_block_interaction) return;
+    public static void onBlockLeftClick(PlayerInteractEvent.LeftClickBlock event) {
+        if (!Configuration.COMMON.disable_block_interaction.get()) return;
         validatePlayerInteractEvent(event);
     }
 
     @SubscribeEvent
-    public static void onExplosionDetonate(ExplosionEvent.Detonate event)
-    {
-        if (!ChunkClaim.disable_explosions || event.getWorld().isRemote) return;
+    public static void onExplosionDetonate(ExplosionEvent.Detonate event) {
+        if (!Configuration.COMMON.disable_explosions.get() || event.getWorld().isRemote) return;
 
         Explosion explosion = event.getExplosion();
         if (explosion.getAffectedBlockPositions().isEmpty()) return;
 
-        EntityLivingBase exploder = explosion.getExplosivePlacedBy();
+        LivingEntity exploder = explosion.getExplosivePlacedBy();
         if (exploder == null) return;
 
         List<BlockPos> list = new ArrayList<>(explosion.getAffectedBlockPositions());
         explosion.clearAffectedBlockPositions();
 
-        for (BlockPos pos : list)
-        {
-            ClaimData cd = ClaimData.get(pos, exploder.dimension);
-            if (!cd.isOwned())
-            {
+        for (BlockPos pos : list) {
+            ClaimData cd = ClaimData.get(pos, exploder.dimension.getId());
+            if (!cd.isOwned()) {
                 explosion.getAffectedBlockPositions().add(pos);
             }
         }
     }
 
-    static void validatePlayerInteractEvent(PlayerInteractEvent event)
-    {
+    static void validatePlayerInteractEvent(PlayerInteractEvent event) {
         validatePlayerInteractEvent(event, event.getPos());
     }
 
-    static void validatePlayerInteractEvent(PlayerInteractEvent event, BlockPos pos)
-    {
-        if (event.getEntityPlayer().getEntityWorld().isRemote || event.getEntityPlayer().isCreative()) return;
+    static void validatePlayerInteractEvent(PlayerInteractEvent event, BlockPos pos) {
+        if (event.getPlayer().getEntityWorld().isRemote || event.getPlayer().isCreative()) return;
 
-        ClaimData cd = ClaimData.get(pos, event.getEntityPlayer());
+        ClaimData cd = ClaimData.get(pos, event.getPlayer());
         if (!cd.isOwned()) return;
 
-        if(!cd.isCitizen(event.getEntityPlayer()))
-        {
+        if (!cd.isCitizen(event.getPlayer())) {
             event.setCanceled(true);
-            if(event.getEntityPlayer() instanceof EntityPlayerMP)
-            {
-                ((EntityPlayerMP)event.getEntityPlayer()).sendContainerToPlayer(event.getEntityPlayer().inventoryContainer);
+            if (event.getPlayer() instanceof ServerPlayerEntity) {
+                ((ServerPlayerEntity) event.getPlayer()).sendContainerToPlayer(event.getPlayer().container);
             }
         }
 
