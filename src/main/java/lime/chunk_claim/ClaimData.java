@@ -114,7 +114,7 @@ public class ClaimData { // for alternative way: implements Serializable
     ClaimData() {
         this.x = Integer.MAX_VALUE;
         this.z = Integer.MAX_VALUE;
-        this.dimension = DimensionType.OVERWORLD.getId();
+        this.dimension = Integer.MAX_VALUE;
         this.owner = "";
     }
 

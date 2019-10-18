@@ -26,7 +26,7 @@ displayName="Chunk Claim" #mandatory
 # A text field displayed in the mod UI
 credits="The Forge and FML guys, for making this possible" #optional
 # A text field displayed in the mod UI
-authors="Lime" #optional
+authors="Lime and polo123qwe" #optional
 # The description text for the mod (multi line!) (#mandatory)
 description='''
 Allows you to claim chunks.

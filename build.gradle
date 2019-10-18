@@ -13,7 +13,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = "7.0.0"
+version = "2.7.0"
 group = "lime.chunk_claim" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "chunk_claim"
 
@@ -115,12 +115,12 @@ dependencies {
 jar {
     manifest {
         attributes([
-            "Specification-Title": "examplemod",
-            "Specification-Vendor": "examplemodsareus",
+            "Specification-Title": "Chunk claim",
+            "Specification-Vendor": "Lime",
             "Specification-Version": "1", // We are version 1 of ourselves
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
-            "Implementation-Vendor" :"examplemodsareus",
+            "Implementation-Vendor" :"Lime",
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
