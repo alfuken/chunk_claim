@@ -1,87 +1,81 @@
 package lime.chunk_claim;
 
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import lime.chunk_claim.commands.*;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.arguments.ArgumentSerializer;
+import net.minecraft.command.arguments.ArgumentTypes;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import org.apache.logging.log4j.Level;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLPaths;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(
-        modid = ChunkClaim.MODID,
-        name = ChunkClaim.NAME,
-        version = ChunkClaim.VERSION,
-        serverSideOnly = true,
-        acceptableRemoteVersions = "*"
-)
+import javax.annotation.Nonnull;
+import java.util.Optional;
+
+@Mod(ChunkClaim.MOD_ID)
 public class ChunkClaim {
-    static final String MODID = "chunk_claim";
-    static final String NAME = "Chunk Claim";
-    static final String VERSION = "6";
+    private static final Logger LOGGER = LogManager.getLogger();
 
-    @Mod.Instance(MODID)
-    public static ChunkClaim instance = new ChunkClaim();
+    static final String MOD_ID = "chunk_claim";
 
-    static Configuration config;
-    static int max_chunks = 9;
-    static boolean disable_fake_block_interaction = false;
-    static boolean disable_block_interaction = true;
-    static boolean disable_entity_interaction = true;
-    static boolean disable_entity_spawning = false;
-    static boolean disable_block_breaking = true;
-    static boolean disable_block_placing = true;
-    static boolean disable_attacking_entities = true;
-    static boolean disable_item_activation = true;
-    static boolean disable_explosions = true;
-    static Logger logger;
+    public ChunkClaim() {
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
 
-    @Mod.EventHandler
-    public void serverLoad(FMLServerStartingEvent event)
-    {
-        event.registerServerCommand(new ChunkClaimCommand());
+        MinecraftForge.EVENT_BUS.register(this);
+
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Configuration.commonSpec);
+        Configuration.loadConfig(Configuration.commonSpec, FMLPaths.CONFIGDIR.get().resolve("chunk_claim-common.toml"));
     }
 
-    @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent event)
-    {
-        logger = event.getModLog();
+    @Nonnull
+    public static ResourceLocation getId(String path) {
+        return new ResourceLocation(MOD_ID, path);
+    }
 
-        config = new Configuration(event.getSuggestedConfigurationFile());
-        try {
-            config.load();
-            max_chunks = config.getInt("max claimed chunks", Configuration.CATEGORY_GENERAL,9,1,255,"Limits the number of chunks each player can claim");
-            disable_fake_block_interaction = config.getBoolean("disable fake block interaction", Configuration.CATEGORY_GENERAL, disable_fake_block_interaction, "Disallow non-player blocks/devices to place and/or interact with any blocks, doors, levers, buttons, etc. inside claimed chunk.");
-            disable_block_interaction = config.getBoolean("disable block interaction", Configuration.CATEGORY_GENERAL, disable_block_interaction, "Disallow non-owner and non-guests to interact with any blocks, doors, levers, buttons, etc. inside claimed chunk.");
-            disable_entity_interaction = config.getBoolean("disable entity interaction", Configuration.CATEGORY_GENERAL, disable_entity_interaction, "Disallow non-owner and non-guests to interact with any entities, such as cows, armour stands, etc. inside claimed chunk.");
-            disable_entity_spawning = config.getBoolean("disable entity spawning", Configuration.CATEGORY_GENERAL, disable_entity_spawning, "Disable mob spawns inside claimed chunk.");
-            disable_block_breaking = config.getBoolean("disable block breaking", Configuration.CATEGORY_GENERAL, disable_block_breaking, "Disallow non-owner and non-guests to break any blocks inside claimed chunk.");
-            disable_block_placing = config.getBoolean("disable block placing", Configuration.CATEGORY_GENERAL, disable_block_placing, "Disallow non-owner and non-guests to place any blocks inside claimed chunk.");
-            disable_attacking_entities = config.getBoolean("disable attacking entities", Configuration.CATEGORY_GENERAL, disable_attacking_entities, "Disallow non-owner and non-guests to attack any living thing that is inside claimed chunk.");
-            disable_item_activation = config.getBoolean("disable item activation", Configuration.CATEGORY_GENERAL, disable_item_activation, "Disallow non-owner and non-guests to use (right-click) any items they hold inside claimed chunk.");
-            disable_explosions = config.getBoolean("disable explosions", Configuration.CATEGORY_GENERAL, disable_explosions, "Disable all and any explosion damage to blocks inside claimed chunk.");
-        } catch (Exception e1) {
-            ChunkClaim.logger.log(Level.ERROR, "Problem loading "+ChunkClaim.MODID+" config file!", e1);
-        } finally {
-            if (config.hasChanged()) {
-                config.save();
-            }
+    @Nonnull
+    public static String getVersion() {
+        Optional<? extends ModContainer> o = ModList.get().getModContainerById(MOD_ID);
+        if (o.isPresent()) {
+            return o.get().getModInfo().getVersion().toString();
         }
+        return "NONE";
     }
 
-    @Mod.EventHandler
-    public void init(FMLInitializationEvent event)
-    {
-        MinecraftForge.EVENT_BUS.register(new EventHandlers());
-    }
+    private void setup(final FMLCommonSetupEvent event) {
+        ArgumentTypes.register("chunk_claim", Argument.class, new ArgumentSerializer<>(Argument::argument));
 
-    @Mod.EventHandler
-    public void postInit(FMLPostInitializationEvent event) {
-        if (config.hasChanged()) {
-            config.save();
-        }
         ClaimData.load();
+        LOGGER.info("Claim Data loaded!");
+    }
+
+    @SubscribeEvent
+    public void serverStarting(FMLServerStartingEvent event) {
+        registerCommands(event.getCommandDispatcher());
+    }
+
+    private void registerCommands(CommandDispatcher<CommandSource> dispatcher) {
+        dispatcher.register(
+                LiteralArgumentBuilder.<CommandSource>literal("chunk_claim")
+                        .then(CommandAddMember.register())
+                        .then(CommandClaim.register())
+//                        .then(CommandEvict.register())
+                        .then(CommandInfo.register())
+                        .then(CommandList.register())
+                        .then(CommandRemoveMember.register())
+                        .then(CommandSudoUnClaim.register())
+                        .then(CommandUnClaim.register())
+        );
     }
 }

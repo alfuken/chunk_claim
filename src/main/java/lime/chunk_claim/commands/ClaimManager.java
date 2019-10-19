@@ -1,8 +1,9 @@
-package lime.chunk_claim;
+package lime.chunk_claim.commands;
 
-import net.minecraft.entity.player.EntityPlayer;
+import lime.chunk_claim.ClaimData;
+import lime.chunk_claim.Configuration;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.Chunk;
 
 import java.util.Random;
 
@@ -28,20 +29,20 @@ class ClaimManager {
     static final String S_MAX_CLAIMS          = "You have reached max allowed number (%d) of claimed chunks.";
     static final String S_OOPS = "Oops. Something went wrong. Please contact server owner or author of this mod.";
 
-    static String claim(EntityPlayer player)
+    static String claim(PlayerEntity player)
     {
         ClaimData cd = ClaimData.get(player);
 
         if (cd.isOwner(player)) return S_Y_R_OWNER;
         if (cd.isOwned()) return S_TAKEN;
-        if (ClaimData.getClaimsCount(player) >= ChunkClaim.max_chunks) return String.format(S_MAX_CLAIMS, ChunkClaim.max_chunks);
+        if (ClaimData.getClaimsCount(player) >= Configuration.COMMON.max_claimed_chunks.get()) return String.format(S_MAX_CLAIMS, Configuration.COMMON.max_claimed_chunks.get());
 
         (new ClaimData(player)).save();
 
         return S_CLAIMED;
     }
 
-    static String unclaim(EntityPlayer player)
+    static String unclaim(PlayerEntity player)
     {
         ClaimData cd = ClaimData.get(player);
 
@@ -51,7 +52,7 @@ class ClaimManager {
         return S_UNCLAIMED;
     }
 
-    static String sudo_unclaim(EntityPlayer player)
+    static String sudo_unclaim(PlayerEntity player)
     {
         if (!player.isCreative()) return S_NO_PERMISSION;
 
@@ -63,7 +64,7 @@ class ClaimManager {
         return S_NO_LONGER_CLAIMED;
     }
 
-    static String evict(EntityPlayer player)
+    static String evict(PlayerEntity player)
     {
         ClaimData cd = ClaimData.get(player);
 
@@ -73,22 +74,23 @@ class ClaimManager {
 
         ChunkPos actor_cp = new ChunkPos(player.getPosition());
 
-        for (EntityPlayer other_player : player.getEntityWorld().playerEntities)
+        /*for (PlayerEntity other_player : player.getEntityWorld().playerEntities)
         {
             ChunkPos cp = new ChunkPos(other_player.getPosition());
 
             if (cp.equals(actor_cp) && !cd.isCitizen(other_player))
             {
-                Chunk c = player.getEntityWorld().getChunkFromBlockCoords(player.getPosition());
+                Chunk c = player.getEntityWorld().getChunk(player.getPosition().getX(), player.getPosition().getZ());
                 int y = c.getHeightValue(player.getPosition().getX(), player.getPosition().getZ());
                 other_player.setPositionAndUpdate(other_player.posX + (r.nextBoolean() ? 16 : -16), y+5, other_player.posZ + (r.nextBoolean() ? 16 : -16));
             }
         }
 
-        return S_EVICT_OK;
+        return S_EVICT_OK;*/
+        return "";
     }
 
-    static String addMember(EntityPlayer player, String name)
+    static String addMember(PlayerEntity player, String name)
     {
         ClaimData cd = ClaimData.get(player);
 
@@ -102,7 +104,7 @@ class ClaimManager {
 
     }
 
-    static String removeMember(EntityPlayer player, String name)
+    static String removeMember(PlayerEntity player, String name)
     {
         ClaimData cd = ClaimData.get(player);
 
@@ -116,12 +118,12 @@ class ClaimManager {
 
     }
 
-    static String list(EntityPlayer player)
+    static String list(PlayerEntity player)
     {
         int cnt = ClaimData.getClaimsCount(player);
         if (cnt == 0) return S_NO_CLAIMED_CHUNKS;
 
-        StringBuilder s = new StringBuilder(String.format(S_Y_CLAIMED, cnt, ChunkClaim.max_chunks));
+        StringBuilder s = new StringBuilder(String.format(S_Y_CLAIMED, cnt, Configuration.COMMON.max_claimed_chunks.get()));
 
         for (ClaimData cd : ClaimData.getClaims(player))
         {
@@ -131,7 +133,7 @@ class ClaimManager {
         return s.toString();
     }
 
-    static String info(EntityPlayer player)
+    static String info(PlayerEntity player)
     {
         ClaimData cd = ClaimData.get(player);
 
