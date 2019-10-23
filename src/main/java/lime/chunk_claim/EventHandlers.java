@@ -1,6 +1,5 @@
 package lime.chunk_claim;
 
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
@@ -14,12 +13,15 @@ import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Mod.EventBusSubscriber
 public class EventHandlers {
+    private static final Logger LOGGER = LogManager.getLogger();
+
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
         if (!Configuration.COMMON.disable_block_breaking.get() || event.getWorld().isRemote() || event.getPlayer().isCreative())
@@ -113,14 +115,11 @@ public class EventHandlers {
         Explosion explosion = event.getExplosion();
         if (explosion.getAffectedBlockPositions().isEmpty()) return;
 
-        LivingEntity exploder = explosion.getExplosivePlacedBy();
-        if (exploder == null) return;
-
-        List<BlockPos> list = new ArrayList<>(explosion.getAffectedBlockPositions());
+        List<BlockPos> list = explosion.getAffectedBlockPositions();
         explosion.clearAffectedBlockPositions();
 
         for (BlockPos pos : list) {
-            ClaimData cd = ClaimData.get(pos, exploder.dimension.getId());
+            ClaimData cd = ClaimData.get(pos, event.getWorld().getDimension().getType().getId());
             if (!cd.isOwned()) {
                 explosion.getAffectedBlockPositions().add(pos);
             }
