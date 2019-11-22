@@ -196,7 +196,7 @@ public class ClaimData { // for alternative way: implements Serializable
     }
 
     public boolean isOwned() {
-        return !this.owner.equals("");
+        return !this.owner.isEmpty();
     }
 
     boolean isOwner(String name) {

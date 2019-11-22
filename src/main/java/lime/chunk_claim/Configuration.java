@@ -59,7 +59,7 @@ public class Configuration {
                     .translation("chunkClaim.config.disable_explosions")
                     .define("disable_explosions", false);
             max_claimed_chunks = builder
-                    .comment("Disable all and any explosion damage to blocks inside claimed chunk.")
+                    .comment("Set the maximum claimable chunks per player.")
                     .translation("chunkClaim.config.max_claimed_chunks")
                     .define("max_claimed_chunks", 9);
         }

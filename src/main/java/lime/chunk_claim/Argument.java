@@ -13,14 +13,13 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class Argument implements ArgumentType<String> {
-
     public static Argument argument() {
         return new Argument();
     }
 
     @Override
     public String parse(final StringReader reader) throws CommandSyntaxException {
-        return reader.readString().toLowerCase();
+        return reader.readString();
     }
 
     @Override
