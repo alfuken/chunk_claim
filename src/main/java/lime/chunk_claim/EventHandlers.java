@@ -108,14 +108,15 @@ public class EventHandlers {
         validatePlayerInteractEvent(event);
     }
 
-    @SubscribeEvent
+@SubscribeEvent
     public static void onExplosionDetonate(ExplosionEvent.Detonate event) {
         if (!Configuration.COMMON.disable_explosions.get() || event.getWorld().isRemote) return;
 
         Explosion explosion = event.getExplosion();
         if (explosion.getAffectedBlockPositions().isEmpty()) return;
 
-        List<BlockPos> list = explosion.getAffectedBlockPositions();
+        List<BlockPos> list = new ArrayList<>(explosion.getAffectedBlockPositions());
+
         explosion.clearAffectedBlockPositions();
 
         for (BlockPos pos : list) {
