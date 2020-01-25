@@ -27,7 +27,7 @@ public class Argument implements ArgumentType<String> {
         List<String> commands = new ArrayList<>();
 
         for(COMMANDS command : COMMANDS.values()) {
-            commands.add(command.toString().toLowerCase());
+            commands.add(command.toString());
         }
 
         return ISuggestionProvider.suggest(commands, builder);

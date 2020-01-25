@@ -16,8 +16,11 @@ import java.util.stream.Collectors;
 
 public class ClaimData { // for alternative way: implements Serializable
     private static Map<String, ClaimData> data = new HashMap<>();
+    static String filePath = "data/"+ChunkClaim.MOD_ID+".json";
+    static long lastModified = -1;
 
     public static ClaimData get(int x, int z, int dimension) {
+        actualizeData();
         return data.getOrDefault(getKey(x, z, dimension), new ClaimData());
     }
 
@@ -42,17 +45,33 @@ public class ClaimData { // for alternative way: implements Serializable
     }
 
     static void add(ClaimData cd) {
+        actualizeData();
         data.put(cd.key(), cd);
         save_all();
     }
 
     static void remove(ClaimData cd) {
+        actualizeData();
         data.remove(cd.key());
         save_all();
     }
 
+    static void actualizeData()
+    {
+        if (isStale())
+        {
+            load();
+        }
+    }
+
+    static boolean isStale()
+    {
+        File f = new File(filePath);
+        return lastModified < f.lastModified();
+    }
+
     static void load() {
-        File f = new File("data/" + ChunkClaim.MOD_ID + ".json");
+        File f = new File(filePath);
         if (f.exists()) {
             try {
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
@@ -78,11 +97,11 @@ public class ClaimData { // for alternative way: implements Serializable
         File f = new File("data/");
         if (!f.exists()) f.mkdir();
 
-        f = new File("data/" + ChunkClaim.MOD_ID + ".json");
+        f = new File(filePath);
         if (f.exists()) f.delete();
 
         try {
-            FileWriter writer = new FileWriter("data/" + ChunkClaim.MOD_ID + ".json");
+            FileWriter writer = new FileWriter(filePath);
             writer.write(gson.toJson(data));
             writer.close();
         } catch (Exception e) {
@@ -100,6 +119,7 @@ public class ClaimData { // for alternative way: implements Serializable
     }
 
     public static List<ClaimData> getClaims(PlayerEntity player) {
+        actualizeData();
         return data.values().stream().filter(cd -> cd.isOwner(player)).collect(Collectors.toList());
     }
 
