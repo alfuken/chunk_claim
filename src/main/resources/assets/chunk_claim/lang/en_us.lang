@@ -15,4 +15,6 @@ chunk_claim.claim_manager.no_claimed_chunks=You have no claimed chunks.
 chunk_claim.claim_manager.y_claimed=You have claimed %d chunks out of allowed %s:
 chunk_claim.claim_manager.owned_by=This chunk is owned by %s
 chunk_claim.claim_manager.members=Registered members: %s
+chunk_claim.claim_manager.chunk_loc=%nx: %d, z: %d
+chunk_claim.claim_manager.max_claims=You have reached max allowed number (%d) of claimed chunks.
 chunk_claim.claim_manager.oops=Oops. Something went wrong. Please contact server owner or author of this mod.

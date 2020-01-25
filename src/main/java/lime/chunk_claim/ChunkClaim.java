@@ -14,13 +14,12 @@ import org.apache.logging.log4j.Logger;
         modid = ChunkClaim.MODID,
         name = ChunkClaim.NAME,
         version = ChunkClaim.VERSION,
-        serverSideOnly = true,
         acceptableRemoteVersions = "*"
 )
 public class ChunkClaim {
     static final String MODID = "chunk_claim";
     static final String NAME = "Chunk Claim";
-    static final String VERSION = "6";
+    static final String VERSION = "9";
 
     @Mod.Instance(MODID)
     public static ChunkClaim instance = new ChunkClaim();
@@ -48,6 +47,7 @@ public class ChunkClaim {
     public void preInit(FMLPreInitializationEvent event)
     {
         logger = event.getModLog();
+        ClaimData.load();
 
         config = new Configuration(event.getSuggestedConfigurationFile());
         try {

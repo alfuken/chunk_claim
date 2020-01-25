@@ -14,15 +14,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 class ClaimData { // for alternative way: implements Serializable
-    private static Map<String, ClaimData> data = new HashMap<>();
+    static Map<String, ClaimData> data = new HashMap<>();
+    static String filePath = "data/"+ChunkClaim.MODID+".json";
+    static long lastModified = -1;
 
     static ClaimData get(int x, int z, int dimension)
     {
+        actualizeData();
         return data.getOrDefault(getKey(x,z,dimension), new ClaimData());
     }
 
     static String getKey(int x, int z, int dimension){
-        return x+":"+"z"+"@"+dimension;
+        return x+":"+z+"@"+dimension;
     }
 
     static ClaimData get(int x, int z, EntityPlayer player)
@@ -47,18 +50,34 @@ class ClaimData { // for alternative way: implements Serializable
     }
 
     static void add(ClaimData cd){
+        actualizeData();
         data.put(cd.key(), cd);
         save_all();
     }
 
     static void remove(ClaimData cd){
+        actualizeData();
         data.remove(cd.key());
         save_all();
     }
 
+    static void actualizeData()
+    {
+        if (isStale())
+        {
+            load();
+        }
+    }
+
+    static boolean isStale()
+    {
+        File f = new File(filePath);
+        return lastModified < f.lastModified();
+    }
+
     static void load()
     {
-        File f = new File("data/"+ChunkClaim.MODID+".json");
+        File f = new File(filePath);
         if ( f.exists() )
         {
             try {
@@ -93,6 +112,8 @@ class ClaimData { // for alternative way: implements Serializable
             writer.close();
         } catch (Exception e) { e.printStackTrace(); }
 
+        lastModified = f.lastModified();
+
         // Alternative way:
         // ObjectOutputStream obj_out = new ObjectOutputStream(new FileOutputStream("data/"+ChunkClaim.MODID+".db"));
         // obj_out.writeObject( data );
@@ -106,6 +127,7 @@ class ClaimData { // for alternative way: implements Serializable
 
     static List<ClaimData> getClaims(EntityPlayer player)
     {
+        actualizeData();
         return data.values().stream().filter(cd -> cd.isOwner(player)).collect(Collectors.toList());
     }
 
@@ -117,15 +139,14 @@ class ClaimData { // for alternative way: implements Serializable
     private String owner;
     private Set<String> members = new HashSet<>();
 
-    ClaimData()
-    {
+    public ClaimData() {
         this.x = Integer.MAX_VALUE;
         this.z = Integer.MAX_VALUE;
         this.dimension = Integer.MAX_VALUE;
         this.owner = "";
     }
 
-    ClaimData(EntityPlayer player)
+    public ClaimData(EntityPlayer player)
     {
         this.x = player.getPosition().getX() >> 4;
         this.z = player.getPosition().getZ() >> 4;
@@ -133,59 +154,65 @@ class ClaimData { // for alternative way: implements Serializable
         this.owner = player.getDisplayNameString();
     }
 
-    void save(){
+    public void save(){
         add(this);
     }
 
-    void delete(){
+    public void delete(){
         remove(this);
     }
 
-    String key(){
+    public String key(){
         return getKey(x,z,dimension);
     }
 
-    void setX(int x)
+    public void setX(int x)
     {
         this.x = x;
     }
 
-    int getX()
+    public int getX()
     {
         return this.x;
     }
 
-    void setZ(int z)
+    public void setZ(int z)
     {
         this.z = z;
     }
 
-    int getZ()
+    public int getZ()
     {
         return this.z;
     }
 
-    void setDimension(int dimension)
+    public void setDimension(int dimension)
     {
         this.dimension = dimension;
     }
 
-    int getDimension()
+    public int getDimension()
     {
         return this.dimension;
     }
 
-    void setOwner(String playername)
+    public void setOwner(String playername)
     {
         this.owner = playername;
     }
 
-    String getOwner()
+    public void setPos(BlockPos pos)
+    {
+        this.x = pos.getX();
+        this.z = pos.getZ();
+    }
+
+    public String getOwner()
     {
         return this.owner;
     }
 
-    boolean addMember(String name)
+    public boolean addMember(String name)
     {
         if (!isMember(name))
         {
@@ -196,7 +223,7 @@ class ClaimData { // for alternative way: implements Serializable
         return false;
     }
 
-    boolean removeMember(String name)
+    public boolean removeMember(String name)
     {
         if (isMember(name))
         {
@@ -207,42 +234,42 @@ class ClaimData { // for alternative way: implements Serializable
         return false;
     }
 
-    Set<String> getMembers()
+    public Set<String> getMembers()
     {
         return this.members;
     }
 
-    boolean hasMembers()
+    public boolean hasMembers()
     {
         return !this.members.isEmpty();
     }
 
-    boolean isOwned()
+    public boolean isOwned()
     {
         return !this.owner.equals("");
     }
 
-    boolean isOwner(String name)
+    public boolean isOwner(String name)
     {
         return this.owner.equalsIgnoreCase(name);
     }
 
-    boolean isOwner(EntityPlayer player)
+    public boolean isOwner(EntityPlayer player)
     {
         return isOwner(player.getDisplayNameString());
     }
 
-    boolean isMember(EntityPlayer player)
+    public boolean isMember(EntityPlayer player)
     {
         return isMember(player.getDisplayNameString());
     }
 
-    boolean isMember(String name)
+    public boolean isMember(String name)
     {
         return this.members.contains(name);
     }
 
-    boolean isCitizen(EntityPlayer player)
+    public boolean isCitizen(EntityPlayer player)
     {
         boolean is_fake_and_enabled = player instanceof FakePlayer && !ChunkClaim.disable_fake_block_interaction;
         return (this.isOwner(player) || this.isMember(player) || is_fake_and_enabled);

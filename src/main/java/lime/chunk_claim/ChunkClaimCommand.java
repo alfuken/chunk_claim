@@ -6,7 +6,9 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentBase;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -58,21 +60,17 @@ public class ChunkClaimCommand implements ICommand {
             command_name = "";
         }
 
-        String result;
-
         switch (command_name){
-            case "info":         result = ClaimManager.info(player); break;
-            case "list":         result = ClaimManager.list(player); break;
-            case "claim":        result = ClaimManager.claim(player); break;
-            case "unclaim":      result = ClaimManager.unclaim(player); break;
-            case "addmember":    result = ClaimManager.addMember(player, argument1); break;
-            case "removemember": result = ClaimManager.removeMember(player, argument1); break;
-            case "evict":        result = ClaimManager.evict(player); break;
-            case "sudo_unclaim": result = ClaimManager.sudo_unclaim(player); break;
-            default:             result = getUsage(sender);
+            case "info":         for (TextComponentTranslation t : ClaimManager.info(player)) { player.sendMessage(t); }; break;
+            case "list":         player.sendMessage(ClaimManager.list(player)); break;
+            case "claim":        player.sendMessage(ClaimManager.claim(player)); break;
+            case "unclaim":      player.sendMessage(ClaimManager.unclaim(player)); break;
+            case "addmember":    player.sendMessage(ClaimManager.addMember(player, argument1)); break;
+            case "removemember": player.sendMessage(ClaimManager.removeMember(player, argument1)); break;
+            case "evict":        player.sendMessage(ClaimManager.evict(player)); break;
+            case "sudo_unclaim": player.sendMessage(ClaimManager.sudo_unclaim(player)); break;
+            default:             player.sendMessage(new TextComponentString(getUsage(player)));
         }
-
-        sender.sendMessage(new TextComponentString(result));
     }
 
     @Override
